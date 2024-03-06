@@ -9,15 +9,15 @@ public class JoobleListingWrapper{
 	public List<Job> jobs;
 	public class Job {
 		public String title;
-		// public String location;
+		public String location;
 		public String snippet;
-		// public String salary; //convert to integer?
-		// public String source;
-		// public String type;
-		// public String link; //URL
+		public String salary; //convert to integer?
+		public String source;
+		public String type;
+		public String link; //URL
 		public String company; //Convert to Account
-		// public String updated;	//date/time field
-		// public String id; // was Integer
+		public String updated;	//date/time field
+		public String id; // was Integer
 	}
     // May not need
 	public static JoobleListingWrapper parse(String json){
