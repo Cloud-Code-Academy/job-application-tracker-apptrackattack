@@ -12,7 +12,7 @@ public with sharing class JoobleCallout {
         String jsonBody = res.getBody();
         String cleanJson = jsonBody.replaceAll('\\\\r\\\\n', '').replaceAll('<b>', '').replaceAll('</b>', '').replaceAll('&nbsp', '');
         Integer statusCode = res.getStatusCode();
-        if (statusCode >= 200 && statusCode < 300) {
+        if (statusCode >= 200 && statusCode < 300 && !String.isBlank(cleanJson)) {
             System.debug('statusCode: ' + statusCode);
             System.debug('>>> cleanJson: ' + cleanJson);
             processJSON(cleanJson);

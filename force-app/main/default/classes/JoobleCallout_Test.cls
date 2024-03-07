@@ -1,7 +1,7 @@
 @isTest
 private class JoobleCallout_Test {
     @TestSetup
-    static void makeData(){
+    static void createTestData(){
         //Create Accounts
         List<Account> acctsToInsert = new List<Account>();
         for (Integer i=1; i<=3; i++){
@@ -12,7 +12,7 @@ private class JoobleCallout_Test {
         }
         insert acctsToInsert;
 
-        //Create Existing Appllications
+        //Create Existing Applications
         List<Application__c> appsToInsert = new List<Application__c>();
         for (Integer i = 1; i <= 3; i++){
             Application__c app = new Application__c(
