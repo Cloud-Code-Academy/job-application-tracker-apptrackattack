@@ -1,6 +1,6 @@
 public with sharing class ApplicationTriggerHandler {
     
-    public static void onBeforeInsert(List<Application__c> newApplications) {
+    public static void afterInsert(List<Application__c> newApplications) {
         List<Task> tasksToAdd = new List<Task>();
         for (Application__c app : newApplications) {
             if (app.Status__c == 'Saved'){
@@ -26,5 +26,6 @@ public with sharing class ApplicationTriggerHandler {
             tasksToAdd.add(task3);
             } 
         }
+        insert tasksToAdd;
     }
 }

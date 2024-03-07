@@ -9,6 +9,6 @@ private class ApplicationTriggerHandler_Test {
 
         List<Task> tasksCreated = [SELECT Id FROM Task];
         // 3 Applications inserted should create 9 tasks
-        Assert.assertEquals(9, tasksCrated.size());
+        Assert.areEqual(9, tasksCreated.size());
     }
 }
