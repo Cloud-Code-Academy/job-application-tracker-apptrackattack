@@ -34,7 +34,19 @@ private class JoobleCallout_Test {
         JoobleCallout.getJoobleListings();
         Test.stopTest();
 
-        List<Application__c> apps = [SELECT Id FROM Application__c];
-        System.assertEquals(2, apps.size(), 'The number of Application records created does not match the expected number.');
+        List<Application__c> apps = [SELECT Id, Company__c, Position_Title__c, Location__c, Listing_ID__c, Listing_Date__c FROM Application__c];
+        System.assertEquals(5, apps.size(), 'The number of Applications (3 old + 2 new) do not match the expected number.');
+        for (Application__c app : apps){
+            System.debug('app: ' + app);
+            System.assertNotEquals(null, app.Listing_ID__c, 'The Listing ID is null.');
+            System.assertNotEquals(null, app.Listing_Date__c, 'The Listing Date is null.');
+        }
+        // Assert that there are not more than 1 Application with the Id of 1
+        Integer count = [SELECT COUNT() FROM Application__c WHERE Listing_ID__c = '1'];
+        System.assertEquals(1, count, 'There are more than 1 Application with the Listing ID of 1.');
+
+        // Assert that the Company with the name 'Test Account 3' has 2 Applications
+        count = [SELECT COUNT() FROM Application__c WHERE Company__r.Name = 'Test Account 3'];
+        System.assertEquals(2, count, 'The Company with the name "Test Account 3" should have 2 Applications.');
     }
 }

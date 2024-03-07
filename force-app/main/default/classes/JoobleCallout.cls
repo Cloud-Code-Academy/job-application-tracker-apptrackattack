@@ -39,7 +39,8 @@ public with sharing class JoobleCallout {
         } else {
             System.debug('Number of qualified listings: ' + salesforceListings.size());
             Set<String> matchingIds = checkListingIds(salesforceListings);
-            System.debug('Matching Ids: ' + matchingIds);
+            //Create Applications based off of salesforceListings and matchingIds
+            createApplications(salesforceListings, matchingIds);
         }
     }
 
@@ -73,12 +74,14 @@ public with sharing class JoobleCallout {
             if (!matchingIds.contains(listing.id)) {
                 // Create Application object
                 Application__c newApp = new Application__c();
-                newApp.Listing_ID__c = listing.id;
+                newApp.Listing_ID__c     = listing.id;
                 newApp.Position_Title__c = listing.title;
-                newApp.Company__c = companyMap.get(listing.company);
-                newApp.Location__c = listing.location;
-                newApp.Description__c = listing.snippet;
-                newApp.Listing_URL__c = listing.link;
+                newApp.Company__c        = companyMap.get(listing.company);
+                newApp.Location__c       = listing.location;
+                newApp.Description__c    = listing.snippet;
+                newApp.Listing_URL__c    = listing.link;
+                newApp.Listing_Date__c   = Date.valueOf(listing.updated);
+
                 newApplications.add(newApp);
             }
         }
@@ -94,6 +97,7 @@ public with sharing class JoobleCallout {
             companyNames.add(listing.company);
         }
         List<Account> matchingAccounts = [SELECT Id, Name FROM Account WHERE Name IN :companyNames];
+        System.debug('Number of matching Accounts found: ' + matchingAccounts.size());
         Map<String,Id> companyMap = new Map<String,Id>();
         for (Account account : matchingAccounts) {
             companyMap.put(account.Name, account.Id);
