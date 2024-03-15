@@ -1,0 +1,48 @@
+<template>
+    <lightning-card title="Estimated Take-Home Salary">
+      <div class="slds-grid slds-var-m-top_medium slds-var-m-horizontal_medium">
+        <div class="slds-col slds-size_6-of-12">
+          <p><b>Estimated Salary: </b>{formattedSalary}</p>
+        </div>
+        <div class="slds-col slds-size_6-of-12">
+          <p><b>Effective Federal Tax Rate: </b>{effectiveFederalTaxRate}%</p>
+        </div>
+      </div>
+      <div class="slds-grid slds-var-m-horizontal_medium">
+        <div class="slds-col slds-size_6-of-12">
+          <p></p>
+        </div>
+        <div class="slds-col slds-size_6-of-12">
+          <p><b>Marginal Tax Rate: </b>{formattedTopMarginalTaxRate}%</p>
+        </div>
+      </div>
+      <div class="slds-grid slds-var-m-around_medium">
+        <div class="slds-col slds-size_3-of-12">
+          <p></p>
+        </div>
+        <div class="slds-col slds-size_3-of-12">
+          <p><b>Bi-Weekly</b></p>
+        </div>
+        <div class="slds-col slds-size_3-of-12">
+          <p><b>Monthly</b></p>
+        </div>
+        <div class="slds-col slds-size_3-of-12">
+          <p><b>Yearly</b></p>
+        </div>
+      </div>
+      <div class="slds-grid slds-var-m-around_medium">
+        <div class="slds-col slds-size_3-of-12">
+          <p><b>Federal Taxes</b></p>
+        </div>
+        <div class="slds-col slds-size_3-of-12">
+          <p>{formattedBiweeklyFederalTaxes}</p>
+        </div>
+        <div class="slds-col slds-size_3-of-12">
+          <p>{formattedMonthlyFederalTaxes}</p>
+        </div>
+        <div class="slds-col slds-size_3-of-12">
+          <p>{formattedAnnualFederalTaxes}</p>
+        </div>
+      </div>
+    </lightning-card>
+</template>
