@@ -17,9 +17,20 @@ export default class PaycheckBreakdown extends LightningElement {
   annualFederalTaxes;
   finishCalculatingFederalTax = false;
   topMarginalTaxRate;
+  annualSocialSecurity = this.calcAnnualSocialSecurity();
+  biweeklySocialSecurity;
+  monthlySocialSecurity;
 
   get formattedSalary() {
     return this.formatter.format(this.salary);
+  }
+
+  get formattedBiweeklySalary() {
+    return this.formatter.format((this.salary/52 * 2).toFixed(2));
+  }
+
+  get formattedMonthlySalary() {
+    return this.formatter.format((this.salary/12).toFixed(2));
   }
 
   get effectiveFederalTaxRate(){
@@ -72,7 +83,25 @@ export default class PaycheckBreakdown extends LightningElement {
     return this.formatter.format((this.calcAnnualFederalTaxes()).toFixed(2));
   }
 
+  get formattedBiweeklySocialSecurity() {
+    this.biweeklySocialSecurity = (this.annualSocialSecurity / 52) * 2;
+    return this.formatter.format((this.biweeklySocialSecurity).toFixed(2));
+  }
+
+  get formattedMonthlySocialSecurity() {
+    this.monthlySocialSecurity = this.annualSocialSecurity / 12;
+    return this.formatter.format((this.monthlySocialSecurity).toFixed(2));
+  }
+
+  get formattedAnnualSocialSecurity() {
+    return this.formatter.format((this.annualSocialSecurity).toFixed(2));
+  }
+
   calcAnnualFederalTaxes() {
     return this.salary - this.salaryAfterFederalTax;
+  }
+
+  calcAnnualSocialSecurity() {
+    return this.salary * 0.062;
   }
 }

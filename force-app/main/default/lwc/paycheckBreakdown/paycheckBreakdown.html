@@ -27,7 +27,21 @@
           <p><b>Monthly</b></p>
         </div>
         <div class="slds-col slds-size_3-of-12">
-          <p><b>Yearly</b></p>
+          <p><b>Annual</b></p>
+        </div>
+      </div>
+      <div class="slds-grid slds-var-m-around_medium">
+        <div class="slds-col slds-size_3-of-12">
+          <p><b>Pre-Tax Salary</b></p>
+        </div>
+        <div class="slds-col slds-size_3-of-12">
+          <p>{formattedBiweeklySalary}</p>
+        </div>
+        <div class="slds-col slds-size_3-of-12">
+          <p>{formattedMonthlySalary}</p>
+        </div>
+        <div class="slds-col slds-size_3-of-12">
+          <p>{formattedSalary}</p>
         </div>
       </div>
       <div class="slds-grid slds-var-m-around_medium">
@@ -42,6 +56,20 @@
         </div>
         <div class="slds-col slds-size_3-of-12">
           <p>{formattedAnnualFederalTaxes}</p>
+        </div>
+      </div>
+      <div class="slds-grid slds-var-m-around_medium">
+        <div class="slds-col slds-size_3-of-12">
+          <p><b>Social Security</b></p>
+        </div>
+        <div class="slds-col slds-size_3-of-12">
+          <p>{formattedBiweeklySocialSecurity}</p>
+        </div>
+        <div class="slds-col slds-size_3-of-12">
+          <p>{formattedMonthlySocialSecurity}</p>
+        </div>
+        <div class="slds-col slds-size_3-of-12">
+          <p>{formattedAnnualSocialSecurity}</p>
         </div>
       </div>
     </lightning-card>
