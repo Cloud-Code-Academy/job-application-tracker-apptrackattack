@@ -5,21 +5,32 @@ export default class PaycheckBreakdown extends LightningElement {
     style: 'currency',
     currency: 'USD'
   });
+  wageBaseLimit = 168600;
+  ssTaxRate = 0.062;
+  medicareTaxRate = 0.0145
+  additionalMedicareTax = 0.009;
+  ficaTaxBrackets = [
+    {min: 0, max: this.wageBaseLimit, rate: this.ssTaxRate},
+    {min: 0, max: 200_000, rate: this.medicareTaxRate},
+    {min: 200_000, max: 1_000_000, rate: (this.medicareTaxRate + this.additionalMedicareTax)}
+  ];
   taxBracket1 = 0.1;
   taxBracket2 = 0.12;
   taxBracket3 = 0.22;
   taxBracket4 = 0.24;
   taxbracket5 = 0.32;
 
-  salary = 100_000;
+  salary = 95_000;
   salaryAfterFederalTax;
   biweeklyFederalTaxes;
   annualFederalTaxes;
+
   finishCalculatingFederalTax = false;
   topMarginalTaxRate;
-  annualSocialSecurity = this.calcAnnualSocialSecurity();
-  biweeklySocialSecurity;
-  monthlySocialSecurity;
+
+  annualFICA = this.calcAnnualFICA();
+  biweeklyFICA;
+  monthlyFICA;
 
   get formattedSalary() {
     return this.formatter.format(this.salary);
@@ -83,18 +94,38 @@ export default class PaycheckBreakdown extends LightningElement {
     return this.formatter.format((this.calcAnnualFederalTaxes()).toFixed(2));
   }
 
-  get formattedBiweeklySocialSecurity() {
-    this.biweeklySocialSecurity = (this.annualSocialSecurity / 52) * 2;
-    return this.formatter.format((this.biweeklySocialSecurity).toFixed(2));
+  get formattedBiweeklyFICA() {
+    this.biweeklyFICA = (this.annualFICA / 52) * 2;
+    return this.formatter.format((this.biweeklyFICA).toFixed(2));
   }
 
-  get formattedMonthlySocialSecurity() {
-    this.monthlySocialSecurity = this.annualSocialSecurity / 12;
-    return this.formatter.format((this.monthlySocialSecurity).toFixed(2));
+  get formattedMonthlyFICA() {
+    this.monthlyFICA = this.annualFICA / 12;
+    return this.formatter.format((this.monthlyFICA).toFixed(2));
   }
 
-  get formattedAnnualSocialSecurity() {
-    return this.formatter.format((this.annualSocialSecurity).toFixed(2));
+  get formattedAnnualFICA() {
+    return this.formatter.format((this.annualFICA).toFixed(2));
+  }
+
+  get formattedTakeHomeAnnualSalary() {
+    return this.formatter.format((this.salaryAfterFederalTax - this.annualFICA));
+  }
+
+  calcAnnualFICA() {
+    let totalFICA = 0;
+    for (const bracket of this.ficaTaxBrackets) {
+      if (this.salary > bracket.min) {
+        console.log('bracket.min: ', bracket.min);
+        console.log('bracket.max: ', bracket.max);
+        console.log('Math.min(this.salary, bracket.max): ', Math.min(this.salary, bracket.max));
+        const taxableAmount = Math.min(this.salary, bracket.max) - bracket.min;
+        console.log('taxableAmount: ', taxableAmount);
+        console.log('bracket.rate: ', bracket.rate);
+        totalFICA += taxableAmount * bracket.rate;
+      }
+    }
+    return totalFICA;
   }
 
   calcAnnualFederalTaxes() {
