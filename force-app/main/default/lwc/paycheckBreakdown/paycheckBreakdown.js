@@ -31,61 +31,56 @@ export default class PaycheckBreakdown extends LightningElement {
   biweeklyFICA;
   monthlyFICA;
 
+  // Effective & Marginal Tax Rate Calculations
+  get effectiveFederalTaxRate () {
+    return ((this.federalTaxesOwed / this.salary) * 100).toFixed(2);
+  }
+  get formattedTopMarginalTaxRate() {
+    return this.topMarginalTaxRate * 100;
+  }
+
+  // Salary Calculations
   get formattedSalary() {
     return this.currency.format(this.salary);
   }
-
   get formattedBiweeklySalary() {
     return this.currency.format((this.salary / 52 * 2).toFixed(2));
   }
-
   get formattedMonthlySalary() {
     return this.currency.format((this.salary / 12).toFixed(2));
   }
 
-  get effectiveFederalTaxRate () {
-    return ((this.federalTaxesOwed / this.salary) * 100).toFixed(2);
-  }
-
-  get formattedTopMarginalTaxRate() {
-    console.log('this.topMarginalTaxRate:', this.topMarginalTaxRate);
-    return this.topMarginalTaxRate * 100;
-  }
-
+  // Federal Tax Calculations
   get formattedBiweeklyFederalTaxes() {
     return this.currency.format(((this.federalTaxesOwed / 52) * 2).toFixed(2));
   }
-
   get formattedMonthlyFederalTaxes() {
     return this.currency.format((this.federalTaxesOwed / 12).toFixed(2));
   }
-
   get formattedAnnualFederalTaxes() {
     return this.currency.format((this.federalTaxesOwed).toFixed(2));
   }
 
+  // FICA Calculations
   get formattedBiweeklyFICA() {
     this.biweeklyFICA = (this.annualFICA / 52) * 2;
     return this.currency.format((this.biweeklyFICA).toFixed(2));
   }
-
   get formattedMonthlyFICA() {
     this.monthlyFICA = this.annualFICA / 12;
     return this.currency.format((this.monthlyFICA).toFixed(2));
   }
-
   get formattedAnnualFICA() {
     return this.currency.format((this.annualFICA).toFixed(2));
   }
 
+  // Take Home Pay Calculations
   get formattedTakeHomeBiWeeklySalary() {
     return this.currency.format(((this.salaryAfterFederalTax / 52 - this.annualFICA / 52) * 2).toFixed(2));
   }
-
   get formattedTakeHomeMonthlySalary() {
     return this.currency.format(((this.salaryAfterFederalTax / 12 - this.annualFICA / 12)).toFixed(2));
   }
-
   get formattedTakeHomeAnnualSalary() {
     return this.currency.format((this.salaryAfterFederalTax - this.annualFICA).toFixed(2));
   }
@@ -97,22 +92,14 @@ export default class PaycheckBreakdown extends LightningElement {
       if (this.salary > bracket.min && bracket.max === null) {
         totalTaxes += (this.salary - bracket.min) * bracket.rate;
         topTaxRate = bracket.rate;
-        console.log('topTaxRate: ', topTaxRate);
       } else if (this.salary > bracket.min) {
         totalTaxes += (Math.min(this.salary, bracket.max) - bracket.min) * bracket.rate;
         topTaxRate = bracket.rate;
-        console.log('topTaxRate: ', topTaxRate);
       }
     }
     if (taxBrackets === this.federalTaxBrackets){
-      console.log('Inside calcAnnualTaxes...');
       this.topMarginalTaxRate = topTaxRate;
-      console.log('this.TopMarginalTaxRate: ', this.topMarginalTaxRate);
     }
     return totalTaxes;
-  }
-
-  calcAnnualSocialSecurity() {
-    return this.salary * 0.062;
   }
 }
