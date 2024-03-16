@@ -1,10 +1,7 @@
 import { LightningElement } from 'lwc';
 
 export default class PaycheckBreakdown extends LightningElement {
-  formatter = new Intl.NumberFormat('en-US', {
-    style: 'currency',
-    currency: 'USD'
-  });
+  currency = new Intl.NumberFormat('en-US', {style: 'currency', currency: 'USD'});
 
   federalTaxBrackets = [
     {min: 0,       max: 11_600,  rate: 0.10},
@@ -14,7 +11,7 @@ export default class PaycheckBreakdown extends LightningElement {
     {min: 191_950, max: 243_725, rate: 0.32},
     {min: 243_725, max: null,    rate: 0.34},
   ];
-
+  // FICA calculations: Social Security + Medicare
   wageBaseLimit = 168_600;
   ssTaxRate = 0.062;
   medicareTaxRate = 0.0145
@@ -31,22 +28,20 @@ export default class PaycheckBreakdown extends LightningElement {
   // federalTaxesOwed = this.calcAnnualFederalTaxes();
   salaryAfterFederalTax = this.salary - this.federalTaxesOwed;
 
- 
-
   annualFICA = this.calcAnnualFICA();
   biweeklyFICA;
   monthlyFICA;
 
   get formattedSalary() {
-    return this.formatter.format(this.salary);
+    return this.currency.format(this.salary);
   }
 
   get formattedBiweeklySalary() {
-    return this.formatter.format((this.salary / 52 * 2).toFixed(2));
+    return this.currency.format((this.salary / 52 * 2).toFixed(2));
   }
 
   get formattedMonthlySalary() {
-    return this.formatter.format((this.salary / 12).toFixed(2));
+    return this.currency.format((this.salary / 12).toFixed(2));
   }
 
   get effectiveFederalTaxRate () {
@@ -59,41 +54,41 @@ export default class PaycheckBreakdown extends LightningElement {
   }
 
   get formattedBiweeklyFederalTaxes() {
-    return this.formatter.format(((this.federalTaxesOwed / 52) * 2).toFixed(2));
+    return this.currency.format(((this.federalTaxesOwed / 52) * 2).toFixed(2));
   }
 
   get formattedMonthlyFederalTaxes() {
-    return this.formatter.format((this.federalTaxesOwed / 12).toFixed(2));
+    return this.currency.format((this.federalTaxesOwed / 12).toFixed(2));
   }
 
   get formattedAnnualFederalTaxes() {
-    return this.formatter.format((this.federalTaxesOwed).toFixed(2));
+    return this.currency.format((this.federalTaxesOwed).toFixed(2));
   }
 
   get formattedBiweeklyFICA() {
     this.biweeklyFICA = (this.annualFICA / 52) * 2;
-    return this.formatter.format((this.biweeklyFICA).toFixed(2));
+    return this.currency.format((this.biweeklyFICA).toFixed(2));
   }
 
   get formattedMonthlyFICA() {
     this.monthlyFICA = this.annualFICA / 12;
-    return this.formatter.format((this.monthlyFICA).toFixed(2));
+    return this.currency.format((this.monthlyFICA).toFixed(2));
   }
 
   get formattedAnnualFICA() {
-    return this.formatter.format((this.annualFICA).toFixed(2));
+    return this.currency.format((this.annualFICA).toFixed(2));
   }
 
   get formattedTakeHomeBiWeeklySalary() {
-    return this.formatter.format(((this.salaryAfterFederalTax / 52 - this.annualFICA / 52) * 2).toFixed(2));
+    return this.currency.format(((this.salaryAfterFederalTax / 52 - this.annualFICA / 52) * 2).toFixed(2));
   }
 
   get formattedTakeHomeMonthlySalary() {
-    return this.formatter.format(((this.salaryAfterFederalTax / 12 - this.annualFICA / 12)).toFixed(2));
+    return this.currency.format(((this.salaryAfterFederalTax / 12 - this.annualFICA / 12)).toFixed(2));
   }
 
   get formattedTakeHomeAnnualSalary() {
-    return this.formatter.format((this.salaryAfterFederalTax - this.annualFICA).toFixed(2));
+    return this.currency.format((this.salaryAfterFederalTax - this.annualFICA).toFixed(2));
   }
 
   calcAnnualTaxes(taxBrackets) {
