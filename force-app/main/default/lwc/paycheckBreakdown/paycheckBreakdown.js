@@ -1,8 +1,10 @@
 import { LightningElement } from 'lwc';
 
 export default class PaycheckBreakdown extends LightningElement {
+  salary = 95_000;
   currency = new Intl.NumberFormat('en-US', {style: 'currency', currency: 'USD'});
 
+  // Federal Tax properties, tax brackets
   federalTaxBrackets = [
     {min: 0,       max: 11_600,  rate: 0.10},
     {min: 11_600,  max: 47_150,  rate: 0.12},
@@ -11,7 +13,11 @@ export default class PaycheckBreakdown extends LightningElement {
     {min: 191_950, max: 243_725, rate: 0.32},
     {min: 243_725, max: null,    rate: 0.34},
   ];
-  // FICA calculations: Social Security + Medicare
+  topMarginalTaxRate;
+  federalTaxesOwed = this.calcAnnualTaxes(this.federalTaxBrackets);
+  salaryAfterFederalTax = this.salary - this.federalTaxesOwed;
+
+  // FICA properties, tax brackets: Social Security + Medicare
   wageBaseLimit = 168_600;
   ssTaxRate = 0.062;
   medicareTaxRate = 0.0145
@@ -21,14 +27,7 @@ export default class PaycheckBreakdown extends LightningElement {
     {min: 0,       max: 200_000,            rate: this.medicareTaxRate},
     {min: 200_000, max: null,               rate: (this.medicareTaxRate + this.additionalMedicareTax)}
   ];
-
-  salary = 95_000;
-  topMarginalTaxRate;
-  federalTaxesOwed = this.calcAnnualTaxes(this.federalTaxBrackets);
-  // federalTaxesOwed = this.calcAnnualFederalTaxes();
-  salaryAfterFederalTax = this.salary - this.federalTaxesOwed;
-
-  annualFICA = this.calcAnnualFICA();
+  annualFICA = this.calcAnnualTaxes(this.ficaTaxBrackets);
   biweeklyFICA;
   monthlyFICA;
 
@@ -111,18 +110,6 @@ export default class PaycheckBreakdown extends LightningElement {
       console.log('this.TopMarginalTaxRate: ', this.topMarginalTaxRate);
     }
     return totalTaxes;
-  }
-
-  calcAnnualFICA() {
-    let totalFICA = 0;
-    for (const bracket of this.ficaTaxBrackets) {
-      if (this.salary > bracket.min && bracket.max === null) {
-        totalFICA += (this.salary - this.bracket.min) * bracket.rate;
-      } else if (this.salary > bracket.min) {
-        totalFICA += (Math.min(this.salary, bracket.max) - bracket.min) * bracket.rate;
-      }
-    }
-    return totalFICA;
   }
 
   calcAnnualSocialSecurity() {
