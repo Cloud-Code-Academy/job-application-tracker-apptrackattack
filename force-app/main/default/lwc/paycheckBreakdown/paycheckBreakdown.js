@@ -1,10 +1,27 @@
-import { LightningElement } from 'lwc';
+import { LightningElement, wire, api } from 'lwc';
+import { getRecord } from 'lightning/uiRecordApi';
+import ESTIMATED_SALARY_FIELD from '@salesforce/schema/Application__c.Estimated_Salary__c';
+
+const fields = [
+    'Application__c.Estimated_Salary__c'
+];
 
 export default class PaycheckBreakdown extends LightningElement {
-  salary = 95_000;
+  @api recordId;
+  salary;
+
+  @wire(getRecord, { recordId: '$recordId', fields: [ESTIMATED_SALARY_FIELD]})
+  applicationWireHandler({ error, data }) {
+      if (data) {
+          this.salary = data.fields.Estimated_Salary__c.value;
+      } else if (error) {
+          console.log('There was a problem getting Estimated_Salary__c from Application__c.');
+      }
+  }
+
   currency = new Intl.NumberFormat('en-US', {style: 'currency', currency: 'USD'});
 
-  // Federal Tax properties, tax brackets
+  // Federal Tax properties, tax brackets 2024
   federalTaxBrackets = [
     {min: 0,       max: 11_600,  rate: 0.10},
     {min: 11_600,  max: 47_150,  rate: 0.12},
@@ -14,10 +31,10 @@ export default class PaycheckBreakdown extends LightningElement {
     {min: 243_725, max: null,    rate: 0.34},
   ];
   topMarginalTaxRate;
-  federalTaxesOwed = this.calcAnnualTaxes(this.federalTaxBrackets);
-  salaryAfterFederalTax = this.salary - this.federalTaxesOwed;
+  federalTaxesOwed;
+  salaryAfterFederalTax;
 
-  // FICA properties, tax brackets: Social Security + Medicare
+  // FICA (Social Security + Medicare) properties, tax brackets 2024
   wageBaseLimit = 168_600;
   ssTaxRate = 0.062;
   medicareTaxRate = 0.0145
@@ -27,13 +44,14 @@ export default class PaycheckBreakdown extends LightningElement {
     {min: 0,       max: 200_000,            rate: this.medicareTaxRate},
     {min: 200_000, max: null,               rate: (this.medicareTaxRate + this.additionalMedicareTax)}
   ];
-  annualFICA = this.calcAnnualTaxes(this.ficaTaxBrackets);
+  annualFICA;
   biweeklyFICA;
   monthlyFICA;
 
   // Effective & Marginal Tax Rate Calculations
   get effectiveFederalTaxRate () {
-    return ((this.federalTaxesOwed / this.salary) * 100).toFixed(2);
+    // return ((this.federalTaxesOwed / this.salary) * 100).toFixed(2);
+    return (((this.calcAnnualTaxes(this.federalTaxBrackets)) / this.salary) * 100).toFixed(2);
   }
   get formattedTopMarginalTaxRate() {
     return this.topMarginalTaxRate * 100;
@@ -63,7 +81,7 @@ export default class PaycheckBreakdown extends LightningElement {
 
   // FICA Calculations
   get formattedBiweeklyFICA() {
-    this.biweeklyFICA = (this.annualFICA / 52) * 2;
+    this.biweeklyFICA = (this.calcAnnualTaxes(this.ficaTaxBrackets) / 52) * 2;
     return this.currency.format((this.biweeklyFICA).toFixed(2));
   }
   get formattedMonthlyFICA() {
@@ -85,10 +103,12 @@ export default class PaycheckBreakdown extends LightningElement {
     return this.currency.format((this.salaryAfterFederalTax - this.annualFICA).toFixed(2));
   }
 
+  // Funciton used to calculate both Federal & FICA payroll taxes
   calcAnnualTaxes(taxBrackets) {
+    console.log('this.salary: ', this.salary);
     let totalTaxes = 0;
     let topTaxRate;
-    for (const bracket of this.federalTaxBrackets) {
+    for (const bracket of taxBrackets) {
       if (this.salary > bracket.min && bracket.max === null) {
         totalTaxes += (this.salary - bracket.min) * bracket.rate;
         topTaxRate = bracket.rate;
@@ -99,6 +119,10 @@ export default class PaycheckBreakdown extends LightningElement {
     }
     if (taxBrackets === this.federalTaxBrackets){
       this.topMarginalTaxRate = topTaxRate;
+      this.federalTaxesOwed = totalTaxes;
+      this.salaryAfterFederalTax = this.salary - totalTaxes;
+    } else if (taxBrackets = this.ficaTaxBrackets) {
+      this.annualFICA = totalTaxes;
     }
     return totalTaxes;
   }
