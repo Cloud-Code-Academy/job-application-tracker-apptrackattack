@@ -1,20 +1,29 @@
 <template>
-    <lightning-card title="Estimated Take-Home Salary*">
-      <div class="slds-grid slds-var-m-top_medium slds-var-m-horizontal_medium">
+    <lightning-card title="Estimated Take-Home Salary" icon-name="utility:money">
+      <div class="slds-grid slds-var-p-horizontal_medium slds-var-p-top_medium slds-var-p-bottom_xx-small">
         <div class="slds-col slds-size_6-of-12">
-          <p><b>Estimated Salary: {formattedSalary}</b></p>
+          <p><b>Estimated Salary: </b></p>
         </div>
         <div class="slds-col slds-size_6-of-12">
           <p><b>Effective Federal Tax Rate: {effectiveFederalTaxRate}%</b></p>
         </div>
       </div>
-      <div class="slds-grid slds-var-m-horizontal_medium">
-        <div class="slds-col slds-size_6-of-12"></div>
+      <div class="slds-grid slds-var-p-horizontal_medium slds-var-p-bottom_large">
+        <div class="slds-col slds-size_3-of-12">
+          <lightning-input
+            variant="label-hidden"
+            type="number"
+            value={salary}
+            onkeydown={salaryHandler}
+            onclick={selectHandler}>
+          </lightning-input>
+        </div>
+        <div class="slds-col slds-size_3-of-12"></div>
         <div class="slds-col slds-size_6-of-12">
           <p><b>Marginal Tax Rate: {formattedTopMarginalTaxRate}%</b></p>
         </div>
       </div>
-      <div class="slds-grid slds-var-m-around_medium">
+      <div class="slds-grid slds-var-p-around_medium slds-var-p-top_large">
         <div class="slds-col slds-size_3-of-12">
           <p></p>
         </div>
@@ -28,7 +37,7 @@
           <p><b>Annual</b></p>
         </div>
       </div>
-      <div class="slds-grid slds-var-m-around_medium">
+      <div class="slds-grid slds-var-p-horizontal_large slds-var-p-bottom_small">
         <div class="slds-col slds-size_3-of-12">
           <p><b>Pre-Tax Salary</b></p>
         </div>
@@ -42,9 +51,9 @@
           <p>{formattedSalary}</p>
         </div>
       </div>
-      <div class="slds-grid slds-var-m-around_medium">
+      <div class="slds-grid slds-var-p-horizontal_large slds-var-p-bottom_small">
         <div class="slds-col slds-size_3-of-12">
-          <p><b>Federal Taxes</b></p>
+          <p><b>Federal Taxes*</b></p>
         </div>
         <div class="slds-col slds-size_3-of-12">
           <p>({formattedBiweeklyFederalTaxes})</p>
@@ -56,7 +65,7 @@
           <p>({formattedAnnualFederalTaxes})</p>
         </div>
       </div>
-      <div class="slds-grid slds-var-m-around_medium">
+      <div class="slds-grid slds-var-p-horizontal_large slds-var-p-bottom_medium">
         <div class="slds-col slds-size_3-of-12">
           <p><b>FICA**</b></p>
         </div>
@@ -70,7 +79,7 @@
           <p>({formattedAnnualFICA})</p>
         </div>
       </div>
-      <div class="slds-grid slds-var-p-horizontal_medium" style="background: #edeff2">
+      <div class="slds-grid slds-var-p-horizontal_medium slds-var-p-bottom_xx-small" style="background: #edeff2">
         <div class="slds-col slds-size_3-of-12">
           <p><b>Total</b></p>
         </div>
@@ -84,8 +93,16 @@
           <p><b>{formattedTakeHomeAnnualSalary}</b></p>
         </div>
       </div>
-      <div class="slds-var-p-horizontal_medium slds-var-p-top_medium slds-text-body_small slds-text-font_monospace">
-        <p>*Based on 2024 Tax Brackets</p>
+      <!-- <div class="slds-grid slds-var-p-horizontal_medium">
+        <div class="slds-col slds-size_6-of-12">
+          <p><b>Effective Federal Tax Rate: {effectiveFederalTaxRate}%</b></p>
+        </div>
+        <div class="slds-col slds-size_6-of-12">
+          <p><b>Marginal Tax Rate: {formattedTopMarginalTaxRate}%</b></p>
+        </div>
+      </div> -->
+      <div class="slds-var-p-horizontal_medium slds-var-p-top_xx-large slds-text-body_small slds-text-font_monospace">
+        <p>*2024 Tax Brackets; Single Standard Deduction</p>
         <P>**Social Security & Medicare</P>
       </div>
     </lightning-card>

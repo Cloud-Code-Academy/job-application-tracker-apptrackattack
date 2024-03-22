@@ -1,5 +1,5 @@
 import { LightningElement, wire, api } from 'lwc';
-import { getRecord } from 'lightning/uiRecordApi';
+import { getRecord, getFieldValue } from 'lightning/uiRecordApi';
 import ESTIMATED_SALARY_FIELD from '@salesforce/schema/Application__c.Estimated_Salary__c';
 
 const fields = [
@@ -8,17 +8,19 @@ const fields = [
 
 export default class PaycheckBreakdown extends LightningElement {
   @api recordId;
-  salary;
+  salary = 0;
 
   @wire(getRecord, { recordId: '$recordId', fields: [ESTIMATED_SALARY_FIELD]})
   applicationWireHandler({ error, data }) {
       if (data) {
-          this.salary = data.fields.Estimated_Salary__c.value;
+        console.log('Inside @Wire. Just got the salary from the record page');
+        this.salary = getFieldValue(data, ESTIMATED_SALARY_FIELD);
       } else if (error) {
-          console.log('There was a problem getting Estimated_Salary__c from Application__c.');
+          console.log('There was a problem getting Estimated_Salary__c from the record page');
       }
   }
 
+  SINGLE_STANDARD_DEDUCTION = 14_600;
   currency = new Intl.NumberFormat('en-US', {style: 'currency', currency: 'USD'});
 
   // Federal Tax properties, tax brackets 2024
@@ -28,11 +30,12 @@ export default class PaycheckBreakdown extends LightningElement {
     {min: 47_150,  max: 100_525, rate: 0.22},
     {min: 100_525, max: 191_950, rate: 0.24},
     {min: 191_950, max: 243_725, rate: 0.32},
-    {min: 243_725, max: null,    rate: 0.34},
+    {min: 243_725, max: 609_350, rate: 0.35},
+    {min: 609_350, max: null,    rate: 0.37}
   ];
-  topMarginalTaxRate;
   federalTaxesOwed;
   salaryAfterFederalTax;
+  topMarginalTaxRate;
 
   // FICA (Social Security + Medicare) properties, tax brackets 2024
   wageBaseLimit = 168_600;
@@ -50,7 +53,6 @@ export default class PaycheckBreakdown extends LightningElement {
 
   // Effective & Marginal Tax Rate Calculations
   get effectiveFederalTaxRate () {
-    // return ((this.federalTaxesOwed / this.salary) * 100).toFixed(2);
     return (((this.calcAnnualTaxes(this.federalTaxBrackets)) / this.salary) * 100).toFixed(2);
   }
   get formattedTopMarginalTaxRate() {
@@ -62,6 +64,7 @@ export default class PaycheckBreakdown extends LightningElement {
     return this.currency.format(this.salary);
   }
   get formattedBiweeklySalary() {
+    this.federalTaxesOwed = this.calcAnnualTaxes(this.federalTaxBrackets);
     return this.currency.format((this.salary / 52 * 2).toFixed(2));
   }
   get formattedMonthlySalary() {
@@ -105,25 +108,47 @@ export default class PaycheckBreakdown extends LightningElement {
 
   // Funciton used to calculate both Federal & FICA payroll taxes
   calcAnnualTaxes(taxBrackets) {
-    console.log('this.salary: ', this.salary);
+    console.log('Inside calcAnnualTaxes function. this.Salary: ' + this.salary);
     let totalTaxes = 0;
     let topTaxRate;
+    let deductionAdjustedSalary = this.salary - this.SINGLE_STANDARD_DEDUCTION;
     for (const bracket of taxBrackets) {
-      if (this.salary > bracket.min && bracket.max === null) {
-        totalTaxes += (this.salary - bracket.min) * bracket.rate;
+      if (deductionAdjustedSalary > bracket.min && bracket.max === null) {
+        totalTaxes += (deductionAdjustedSalary - bracket.min) * bracket.rate;
         topTaxRate = bracket.rate;
-      } else if (this.salary > bracket.min) {
-        totalTaxes += (Math.min(this.salary, bracket.max) - bracket.min) * bracket.rate;
+      } else if (deductionAdjustedSalary > bracket.min) {
+        totalTaxes += (Math.min(deductionAdjustedSalary, bracket.max) - bracket.min) * bracket.rate;
         topTaxRate = bracket.rate;
       }
+      console.log('Inside calcAnnualTaxes bracket loop. Total Taxes: ' + totalTaxes);
     }
     if (taxBrackets === this.federalTaxBrackets){
-      this.topMarginalTaxRate = topTaxRate;
       this.federalTaxesOwed = totalTaxes;
+      console.log('Just got the federal taxes owed: ' + totalTaxes);
       this.salaryAfterFederalTax = this.salary - totalTaxes;
+      this.topMarginalTaxRate = topTaxRate;
     } else if (taxBrackets = this.ficaTaxBrackets) {
       this.annualFICA = totalTaxes;
+      console.log('Just got the annual FICA owed: ' + this.annualFICA);
     }
     return totalTaxes;
   }
+
+  salaryHandler(event) {
+    console.log('Entered salaryHandler...');
+    if (event.key === 'Enter' || event.key === 'Tab') {
+        this.salary = Number(event.target.value);
+        console.log('Just set the salary to: ' + this.salary);
+    } 
+  }
+
+  selectHandler(event) {
+    // This function is used to select the entire input value when the user clicks on the input field
+    event.target.selectionStart = 0 ;
+    if(event.target.value){
+       event.target.selectionEnd = event.target.value.toString().length ;
+    }else{
+       event.target.selectionEnd = 0 ;
+    }
+ }
 }
