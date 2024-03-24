@@ -20,6 +20,7 @@ public with sharing class JoobleCallout {
             System.debug('Jooble callout failed. Status Code: ' + statusCode);
             System.debug('jsonBody: ' + jsonBody);
         }
+        
     }
 
     public static void processJSON(String jsonBody) {
@@ -41,7 +42,7 @@ public with sharing class JoobleCallout {
             Set<String> matchingIds = checkListingIds(salesforceListings);
             //Create Applications based off of salesforceListings and matchingIds
             createApplications(salesforceListings, matchingIds);
-        }
+        } 
     }
 
 
