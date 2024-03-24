@@ -38,9 +38,8 @@ export default class JoobleCalloutLWC extends LightningElement {
   searchHandler(event) {
     console.log('searchHandler');
     this.keywordList = this.keywords.split(' ');
-    console.log(this.keywords, this.location, this.dateRangeDays, this.dateFrom, this.keywordList);
+    console.log(this.keywords, this.location, this.dateRangeDays, this.dateFrom);
     console.log('JSON.stringify: ', JSON.stringify(this.keywordList));
-    console.table('table', this.keywordList);
   }
 
   calcDate = function() {
