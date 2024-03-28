@@ -31,7 +31,7 @@ private class JoobleCallout_Test {
     static void testJoobleCallout(){
         Test.setMock(HttpCalloutMock.class, new JoobleCalloutMock());
         Test.startTest();
-        JoobleCallout.getJoobleListings();
+        JoobleCallout.getJoobleListings('Salesforce Developer', 'Remote', '2024-03-01');
         Test.stopTest();
 
         List<Application__c> apps = [SELECT Id, Company__c, Position_Title__c, Location__c, Listing_ID__c, Listing_Date__c FROM Application__c];

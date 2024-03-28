@@ -4,7 +4,7 @@ private class ApplicationTriggerHandler_Test {
     @isTest private static void testBeforeInsert() {
         Test.setMock(HttpCalloutMock.class, new JoobleCalloutMock());
         Test.startTest();
-        JoobleCallout.getJoobleListings();
+        JoobleCallout.getJoobleListings('Salesforce Developer', 'Remote', '2024-03-01');
         Test.stopTest();
 
         List<Task> tasksCreated = [SELECT Id FROM Task];

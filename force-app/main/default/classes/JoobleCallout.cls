@@ -1,6 +1,6 @@
 public with sharing class JoobleCallout {
 
-    public static void getJoobleListings() {
+    public static void getJoobleListings(String keywords, String location, String fromSearchDate) {
         HttpRequest req = new HttpRequest();
         req.setEndpoint('callout:JoobleAPI');
         req.setMethod('POST');
@@ -15,7 +15,7 @@ public with sharing class JoobleCallout {
         if (statusCode >= 200 && statusCode < 300 && !String.isBlank(cleanJson)) {
             System.debug('statusCode: ' + statusCode);
             System.debug('>>> cleanJson: ' + cleanJson);
-            processJSON(cleanJson);
+            processJSON(cleanJson, keywords);
         } else {
             System.debug('Jooble callout failed. Status Code: ' + statusCode);
             System.debug('jsonBody: ' + jsonBody);
@@ -23,20 +23,28 @@ public with sharing class JoobleCallout {
         
     }
 
-    public static void processJSON(String jsonBody) {
+    public static void processJSON(String jsonBody, String keywords) {
+        List<String> keywordList = keywords.split(' ');
+        System.debug('keywordList: ' + keywordList);
+        Boolean containsAllKeywords = false;
         JoobleListingWrapper result = JoobleListingWrapper.parse(jsonBody);
         List<JoobleListingWrapper.Job> listings = result.jobs;
         List<JoobleListingWrapper.Job> salesforceListings = new List<JoobleListingWrapper.Job>();
         for(JoobleListingWrapper.Job listing : listings) {
-            System.debug('>>' + listing.title + '<< contains both Salesforce & Developer: ' + ((listing.title).contains('Salesforce') && (listing.title).contains('Developer')));
-            // The conditional statement below will need to be dynamic based on user, so instead 
-            // we may need to have a set of keywords (eg, {'Salesforce', 'developer'}) 
-            if ((listing.title).contains('Salesforce') && (listing.title).contains('Developer')) {
+            for (String keyword : keywordList) {
+                if ((listing.title).contains(keyword)) {
+                    containsAllKeywords = true;
+                } else {
+                    containsAllKeywords = false;
+                    break;
+                }
+            }
+            if (containsAllKeywords) {
                 salesforceListings.add(listing);
             }
         }
         if (salesforceListings.isEmpty()) {
-            System.debug('No Salesforce listings found');
+            System.debug('No Salesforce listings found with exact keyword match.');
         } else {
             System.debug('Number of qualified listings: ' + salesforceListings.size());
             Set<String> matchingIds = checkListingIds(salesforceListings);
