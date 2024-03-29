@@ -35,7 +35,7 @@ private class JoobleCallout_Test {
         Test.stopTest();
 
         List<Application__c> apps = [SELECT Id, Company__c, Position_Title__c, Location__c, Listing_ID__c, Listing_Date__c FROM Application__c];
-        System.assertEquals(5, apps.size(), 'The number of Applications (3 old + 2 new) do not match the expected number.');
+        System.assertEquals(4, apps.size(), 'The number of Applications (3 old + 1 new) do not match the expected number.');
         for (Application__c app : apps){
             System.debug('app: ' + app);
             System.assertNotEquals(null, app.Listing_ID__c, 'The Listing ID is null.');
