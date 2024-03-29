@@ -51,7 +51,7 @@ public with sharing class JoobleCallout {
         System.debug('Exited while loop');
         System.debug('About to call insertApplications()');
         insertApplications();
-        return [SELECT Company__r.Name, Position_Title__c, Listing_Date__c FROM Application__c WHERE Id IN :newAppIds];
+        return [SELECT Company_Name__c, Position_Title__c, Listing_Date__c FROM Application__c WHERE Id IN :newAppIds];
     }
 
     public static void processJSON(String jsonBody, String keywords, String fromSearchDate) {

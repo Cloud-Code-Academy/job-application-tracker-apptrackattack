@@ -2,8 +2,8 @@ import { LightningElement } from 'lwc';
 import getJoobleListings from '@salesforce/apex/JoobleCallout.getJoobleListings';
 
 const columns = [
-  { label: 'Company', fieldName: 'Company__r.Name' },
-  { label: 'Position Title', fieldName: 'Position_Title__c' },
+  { label: 'Company', fieldName: 'Company_Name__c', wrapText: true},
+  { label: 'Position Title', fieldName: 'Position_Title__c', wrapText: true },
   { label: 'Listing Date', fieldName: 'Listing_Date__c', type: 'date-local' }
 ];
 
