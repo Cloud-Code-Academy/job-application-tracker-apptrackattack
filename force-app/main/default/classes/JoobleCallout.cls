@@ -1,31 +1,60 @@
 public with sharing class JoobleCallout {
+    public static Integer resultsPerPage = 500;
+    public static List<String> keywordList = new List<String>();
+    public static Set<Id> newAppIds = new Set<Id>();
+    public static Integer pageNumber = 1;
+    public static Integer maxPage = 1;
+    public static Boolean maxPageSet = false;
+    public static List<Application__c> newApplications = new List<Application__c>();
 
-    public static void getJoobleListings(String keywords, String location, String fromSearchDate) {
-        HttpRequest req = new HttpRequest();
-        req.setEndpoint('callout:JoobleAPI');
-        req.setMethod('POST');
-        req.setHeader('Content-Type', 'application/json');
-        // Will need to make the body dynamic
-        req.setBody('{"keywords":"salesforce","location":"remote","resultonpage":100,"datecreatedfrom":"2024-03-02"}');
-        Http http = new Http();
-        HttpResponse res = http.send(req);
-        String jsonBody = res.getBody();
-        String cleanJson = jsonBody.replaceAll('\\\\r\\\\n', '').replaceAll('<b>', '').replaceAll('</b>', '').replaceAll('&nbsp', '');
-        Integer statusCode = res.getStatusCode();
-        if (statusCode >= 200 && statusCode < 300 && !String.isBlank(cleanJson)) {
-            System.debug('statusCode: ' + statusCode);
-            System.debug('>>> cleanJson: ' + cleanJson);
-            processJSON(cleanJson, keywords);
-        } else {
-            System.debug('Jooble callout failed. Status Code: ' + statusCode);
-            System.debug('jsonBody: ' + jsonBody);
+    @AuraEnabled
+    public static List<Application__c> getJoobleListings(String keywords, String location, String fromSearchDate) {
+        System.debug('keywords: ' + keywords);
+        System.debug('location: ' + location);
+        System.debug('fromSearchDate: ' + fromSearchDate);
+        // Capture all keywords in a list to check against listings later
+        keywordList = keywords.split(' ');
+        // Update keywords to just 'Salesforce' if keywords contains 'Salesforce' to minimize API calls
+        // Later, keywordList will be used to check if all keywords are present in the title
+        if (keywordList.contains('Salesforce')) {
+            keywords = 'Salesforce';
         }
-        
+        System.debug('keywordList: ' + keywordList);
+        System.debug('keywords: ' + keywords);
+
+        // The while loop handles multiple pages of results
+        while (pageNumber <= maxPage) {
+            System.debug('pageNumber: ' + pageNumber);
+            System.debug('maxPage: ' + maxPage);
+            HttpRequest req = new HttpRequest();
+            req.setEndpoint('callout:JoobleAPI');
+            req.setMethod('POST');
+            req.setHeader('Content-Type', 'application/json');
+            req.setBody('{"keywords":"'+ keywords + '","location":"' + location + '","resultonpage":' + resultsPerPage + ',"datecreatedfrom":"' + fromSearchDate + '","page":"' + String.valueOf(pageNumber) + '"}');
+            Http http = new Http();
+            HttpResponse res = http.send(req);
+            String jsonBody = res.getBody();
+            if (!maxPageSet) {
+                calcMaxPage(jsonBody);
+            }
+            String cleanJson = jsonBody.replaceAll('\\\\r\\\\n', '').replaceAll('<b>', '').replaceAll('</b>', '').replaceAll('&nbsp', '');
+            Integer statusCode = res.getStatusCode();
+            if (statusCode >= 200 && statusCode < 300 && !String.isBlank(cleanJson)) {
+                System.debug('statusCode: ' + statusCode);
+                processJSON(cleanJson, keywords, fromSearchDate);
+            } else {
+                System.debug('Jooble callout failed. Status Code: ' + statusCode);
+                System.debug('jsonBody: ' + jsonBody);
+            }
+            pageNumber++;
+        }
+        System.debug('Exited while loop');
+        System.debug('About to call insertApplications()');
+        insertApplications();
+        return [SELECT Company__r.Name, Position_Title__c, Listing_Date__c FROM Application__c WHERE Id IN :newAppIds];
     }
 
-    public static void processJSON(String jsonBody, String keywords) {
-        List<String> keywordList = keywords.split(' ');
-        System.debug('keywordList: ' + keywordList);
+    public static void processJSON(String jsonBody, String keywords, String fromSearchDate) {
         Boolean containsAllKeywords = false;
         JoobleListingWrapper result = JoobleListingWrapper.parse(jsonBody);
         List<JoobleListingWrapper.Job> listings = result.jobs;
@@ -39,7 +68,8 @@ public with sharing class JoobleCallout {
                     break;
                 }
             }
-            if (containsAllKeywords) {
+            // Confirms that all keywords are present in the title and the listing date meets the searchFromDate criteria
+            if (containsAllKeywords && (Date.valueOf(listing.updated) >= Date.valueOf(fromSearchDate))){
                 salesforceListings.add(listing);
             }
         }
@@ -77,14 +107,12 @@ public with sharing class JoobleCallout {
     //Create Application objects for the listings that are not duplicates
     public static void createApplications(List<JoobleListingWrapper.Job> salesforceListings, Set<String> matchingIds) {
         Map<String,Id> companyMap = checkCompanyNames(salesforceListings);
-
-        List<Application__c> newApplications = new List<Application__c>();
         for (JoobleListingWrapper.Job listing : salesforceListings) {
             if (!matchingIds.contains(listing.id)) {
                 // Create Application object
                 Application__c newApp = new Application__c();
                 newApp.Listing_ID__c     = listing.id;
-                newApp.Position_Title__c = listing.title;
+                newApp.Position_Title__c = listing.title.left(40);
                 newApp.Company__c        = companyMap.get(listing.company);
                 newApp.Location__c       = listing.location;
                 newApp.Description__c    = listing.snippet;
@@ -94,7 +122,7 @@ public with sharing class JoobleCallout {
                 newApplications.add(newApp);
             }
         }
-        insert newApplications;
+        System.debug('Number of new Applications to insert from page ' + pageNumber + ': ' + newApplications.size());
     }
 
     // For salesforceListings not found in system, check if any of the Company names already exist. 
@@ -124,5 +152,25 @@ public with sharing class JoobleCallout {
             companyMap.put(newAccount.Name, newAccount.Id);
         }
         return companyMap;
+    }
+
+    public static void calcMaxPage(String jsonBody) {
+        JoobleListingWrapper result = JoobleListingWrapper.parse(jsonBody);
+        System.debug('result.totalCount: ' + result.totalCount);
+        maxPage = (Integer) Math.ceil(result.totalCount * 1.0 / resultsPerPage);
+        maxPageSet = true;
+        System.debug('maxPage: ' + maxPage);
+        System.debug('maxPageSet: ' + maxPageSet);
+    }
+
+    public static void insertApplications() {
+        System.debug('Entered insertApplications');
+        System.debug('newApplications.size(): ' + newApplications.size());
+        if (!newApplications.isEmpty()) {
+            insert newApplications;
+            for (Application__c newApp : newApplications) {
+                newAppIds.add(newApp.Id);
+            }
+        }
     }
 }

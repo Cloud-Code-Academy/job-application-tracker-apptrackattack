@@ -1,5 +1,5 @@
 <template>
-  <lightning-card title="Jooble Job Listing Search">
+  <lightning-card title="Jooble Job Listing Search" icon-name="utility:search">
     <div class="slds-grid slds-var-p-horizontal_medium slds-var-p-top_medium slds-var-p-bottom_xx-small">
       <div class="slds-col slds-size_6-of-12">
         <p><b>Keywords (eg, job title): </b></p>
@@ -51,5 +51,14 @@
           onclick={searchHandler}>
       </lightning-button>
     </div>
+    <template lwc:if={showResults}>
+        <div style="height: 300px;">
+            <lightning-datatable
+                    key-field="id"
+                    data={searchResults}
+                    columns={columns}>
+            </lightning-datatable>
+        </div>
+    </template>
   </lightning-card>
 </template>
