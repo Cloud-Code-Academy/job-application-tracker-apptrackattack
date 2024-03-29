@@ -2,7 +2,8 @@ import { LightningElement } from 'lwc';
 import getJoobleListings from '@salesforce/apex/JoobleCallout.getJoobleListings';
 
 const columns = [
-  { label: 'Company', fieldName: 'Company_Name__c', wrapText: true},
+  { label: 'Company', fieldName: 'CompanyURL', type: 'url', 
+    typeAttributes: { label: { fieldName: 'Company_Name__c' }, target: '_blank' }, wrapText: true },
   { label: 'Position Title', fieldName: 'Position_Title__c', wrapText: true },
   { label: 'Listing Date', fieldName: 'Listing_Date__c', type: 'date-local' }
 ];
@@ -46,6 +47,10 @@ export default class JoobleCalloutLWC extends LightningElement {
       .then(result => {
         console.log(result);
         this.searchResults = result;
+        // add a field that is the Salesforce URL for the record to hyperlink to the record under Company Name
+        this.searchResults.forEach(element => {
+          element.CompanyURL = `/${element.Id}`;
+        });
         if (this.searchResults.length > 0) {
           this.showResults = true;
         }
