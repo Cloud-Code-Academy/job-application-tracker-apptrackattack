@@ -2,21 +2,24 @@ import { LightningElement } from 'lwc';
 import getJoobleListings from '@salesforce/apex/JoobleCallout.getJoobleListings';
 
 const columns = [
-  { label: 'Company', fieldName: 'CompanyURL', type: 'url', 
-    typeAttributes: { label: { fieldName: 'Company_Name__c' }, target: '_blank' }, wrapText: true },
-  { label: 'Position Title', fieldName: 'Position_Title__c', wrapText: true },
+  { label: 'Company', fieldName: 'Company_Name__c', wrapText: true },
+  { label: 'Position Title', fieldName: 'recordURL', type: 'url',
+      typeAttributes: { label: { fieldName: 'Position_Title__c' }, target: '_blank' }, wrapText: true },
   { label: 'Listing Date', fieldName: 'Listing_Date__c', type: 'date-local' }
 ];
 
 export default class JoobleCalloutLWC extends LightningElement {
+  showFooter = true;
   keywords = '';
   location = '';
   dateRangeDays = '0';
   fromSearchDate = '';
   columns = columns;
-
   searchResults;
+  searchRunning = false;
   showResults = false;
+  picklistPlaceholder = '-select-';
+  selectedValue = '';
 
   get options() {
       return [
@@ -41,23 +44,39 @@ export default class JoobleCalloutLWC extends LightningElement {
   }
 
   searchHandler(event) {
+    this.searchRunning = true;
     console.log('searchHandler');
     console.log(this.keywords, this.location, this.dateRangeDays, this.fromSearchDate);
     getJoobleListings({keywords: this.keywords, location: this.location, fromSearchDate: this.fromSearchDate})
       .then(result => {
         console.log(result);
         this.searchResults = result;
-        // add a field that is the Salesforce URL for the record to hyperlink to the record under Company Name
+        // The following creates a link to the Applicatin record via the Position Title
         this.searchResults.forEach(element => {
-          element.CompanyURL = `/${element.Id}`;
+          element.recordURL = `/${element.Id}`;
         });
         if (this.searchResults.length > 0) {
           this.showResults = true;
+          this.showFooter = false;
         }
+        this.searchRunning = false;
       })
       .catch(error => {
         console.log(error);
       });
+  }
+
+  reset = function() {
+    this.showFooter = true;
+    this.keywords = '';
+    this.location = '';
+    this.picklistPlaceholder = '-select-';
+    this.selectedValue = '';
+    this.dateRangeDays = '0';
+    this.fromSearchDate = '';
+    this.searchResults = null;
+    this.searchRunning = false;
+    this.showResults = false;
   }
 
   calcDate = function() {
@@ -69,7 +88,8 @@ export default class JoobleCalloutLWC extends LightningElement {
     this.fromSearchDate = `${year}-${month}-${day}`;
   }
 
-  dateHandler(event) {
+  handleChange(event) {
+    this.selectedValue = event.detail.value;
     this.dateRangeDays = event.target.value;
     this.calcDate();
   }

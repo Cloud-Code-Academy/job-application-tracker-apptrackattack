@@ -1,5 +1,10 @@
 <template>
   <lightning-card title="Jooble Job Listing Search" icon-name="utility:search">
+    <lightning-button 
+        slot="actions"
+        label="Reset" 
+        onclick={reset}>
+    </lightning-button>
     <div class="slds-grid slds-var-p-horizontal_medium slds-var-p-top_medium slds-var-p-bottom_xx-small">
       <div class="slds-col slds-size_6-of-12">
         <p><b>Keywords (eg, job title): </b></p>
@@ -37,26 +42,31 @@
         <lightning-combobox
             name="dateRange"
             variant="label-hidden"
-            value={value}
-            placeholder="-select-"
+            value={selectedValue}
+            placeholder={picklistPlaceholder}
             options={options}
-            onchange={dateHandler} >
+            onchange={handleChange} >
         </lightning-combobox>
       </div>
     </div>
-    <div slot="footer" class="slds-var-m-around_xxx-small">
-      <lightning-button 
-          variant="brand"
-          label="Search Jooble"
-          onclick={searchHandler}>
-      </lightning-button>
-    </div>
+    <template lwc:if={showFooter}>
+      <div slot="footer" class="slds-var-m-around_xxx-small">
+        <lightning-button 
+            variant="brand"
+            label="Search Jooble"
+            onclick={searchHandler}>
+        </lightning-button>
+      </div>
+    </template>
+    <template lwc:if={searchRunning}>
+      <lightning-spinner alternative-text="Searching"></lightning-spinner>
+    </template>
     <template lwc:if={showResults}>
-        <div style="height: 300px;">
+        <div class="slds-var-p-top_large">
             <lightning-datatable
-                    key-field="id"
-                    data={searchResults}
-                    columns={columns}>
+                key-field="id"
+                data={searchResults}
+                columns={columns}>
             </lightning-datatable>
         </div>
     </template>

@@ -5,6 +5,8 @@ public with sharing class JoobleCallout {
     public static Integer pageNumber = 1;
     public static Integer maxPage = 1;
     public static Boolean maxPageSet = false;
+    public static List<JoobleListingWrapper.Job> salesforceListings = new List<JoobleListingWrapper.Job>();
+    public static Set<String> matchingIds = new Set<String>();
     public static List<Application__c> newApplications = new List<Application__c>();
 
     @AuraEnabled
@@ -55,10 +57,10 @@ public with sharing class JoobleCallout {
     }
 
     public static void processJSON(String jsonBody, String keywords, String fromSearchDate) {
+        Integer matchCount = 0;
         Boolean containsAllKeywords = false;
         JoobleListingWrapper result = JoobleListingWrapper.parse(jsonBody);
         List<JoobleListingWrapper.Job> listings = result.jobs;
-        List<JoobleListingWrapper.Job> salesforceListings = new List<JoobleListingWrapper.Job>();
         for(JoobleListingWrapper.Job listing : listings) {
             for (String keyword : keywordList) {
                 if ((listing.title).contains(keyword)) {
@@ -70,25 +72,26 @@ public with sharing class JoobleCallout {
             }
             // Confirms that all keywords are present in the title and the listing date meets the searchFromDate criteria
             if (containsAllKeywords && (Date.valueOf(listing.updated) >= Date.valueOf(fromSearchDate))){
+                matchCount++;
                 salesforceListings.add(listing);
             }
         }
         if (salesforceListings.isEmpty()) {
             System.debug('No Salesforce listings found with exact keyword match.');
         } else {
-            System.debug('Number of qualified listings: ' + salesforceListings.size());
-            Set<String> matchingIds = checkListingIds(salesforceListings);
-            //Create Applications based off of salesforceListings and matchingIds
-            createApplications(salesforceListings, matchingIds);
-        } 
-    }
+            System.debug('Number of qualified listings on page ' + pageNumber + ': ' + matchCount);
+            checkListingIds();
+        }
 
+        if (pageNumber == maxPage && !salesforceListings.isEmpty()) {
+            createApplications();
+        }
+    }
 
     // Check Jooble IDs on salesforceListings to see if they already exist in Applications
     // If so, ignore these listings (as duplicates).
-    public static Set<String> checkListingIds(List<JoobleListingWrapper.Job> salesforceListings) {
+    public static void checkListingIds() {
         List<String> listingIdsToSearch = new List<String>();
-        Set<String> matchingIds = new Set<String>();
         for (JoobleListingWrapper.job listing : salesforceListings) {
             listingIdsToSearch.add(listing.id);
         }
@@ -101,18 +104,16 @@ public with sharing class JoobleCallout {
                 matchingIds.add(app.Listing_ID__c);
             }
         }
-        return matchingIds;
     }
 
     //Create Application objects for the listings that are not duplicates
-    public static void createApplications(List<JoobleListingWrapper.Job> salesforceListings, Set<String> matchingIds) {
+    public static void createApplications() {
         Map<String,Id> companyMap = checkCompanyNames(salesforceListings);
         for (JoobleListingWrapper.Job listing : salesforceListings) {
-            if (!matchingIds.contains(listing.id)) {
-                // Create Application object
+            if (!matchingIds.contains(listing.id) && companyMap.get(listing.company) != null){
                 Application__c newApp = new Application__c();
                 newApp.Listing_ID__c     = listing.id;
-                newApp.Position_Title__c = listing.title.left(40);
+                newApp.Position_Title__c = listing.title.left(60);
                 newApp.Company__c        = companyMap.get(listing.company);
                 newApp.Location__c       = listing.location;
                 newApp.Description__c    = listing.snippet;
@@ -122,12 +123,8 @@ public with sharing class JoobleCallout {
                 newApplications.add(newApp);
             }
         }
-        System.debug('Number of new Applications to insert from page ' + pageNumber + ': ' + newApplications.size());
     }
 
-    // For salesforceListings not found in system, check if any of the Company names already exist. 
-    // If so, create a map of name to Id so that it can be used when creating a new Application object. 
-    // If not, create a new Company object and add to the map.
     public static Map<String,Id> checkCompanyNames(List<JoobleListingWrapper.Job> salesforceListings) {
         Set<String> companyNames = new Set<String>();
         for (JoobleListingWrapper.Job listing : salesforceListings) {
@@ -141,7 +138,7 @@ public with sharing class JoobleCallout {
         }
         List<Account> newAccounts = new List<Account>();
         for (JoobleListingWrapper.Job listing : salesforceListings) {
-            if (companyMap.get(listing.company) == null) {
+            if (companyMap.get(listing.company) == null && listing.company != null) {
                 Account newAccount = new Account();
                 newAccount.Name = listing.company;
                 newAccounts.add(newAccount);

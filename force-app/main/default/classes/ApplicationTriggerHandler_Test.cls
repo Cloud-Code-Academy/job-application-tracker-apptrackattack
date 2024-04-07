@@ -8,8 +8,9 @@ private class ApplicationTriggerHandler_Test {
         Test.stopTest();
 
         List<Task> tasksCreated = [SELECT Id FROM Task];
-        // 3 Applications inserted should create 9 tasks
-        Assert.areEqual(9, tasksCreated.size());
+        // 2 Applications meet the criteria: title (Salesforce Developer), location (remote), and date (>= 2024-03-01)
+        // 2 Applications inserted should create 6 tasks
+        Assert.areEqual(6, tasksCreated.size());
     }
 
     @isTest private static void testStatusApplying() {
