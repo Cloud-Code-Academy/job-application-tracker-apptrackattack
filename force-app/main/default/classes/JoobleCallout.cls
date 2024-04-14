@@ -14,7 +14,7 @@ public with sharing class JoobleCallout {
         System.debug('keywords: ' + keywords);
         System.debug('location: ' + location);
         System.debug('fromSearchDate: ' + fromSearchDate);
-        // Capture all keywords in a list to check against listings later
+        // Capture all keywords in a list to check against listing title later
         keywordList = keywords.split(' ');
         // Update keywords to just 'Salesforce' if keywords contains 'Salesforce' to minimize API calls
         // Later, keywordList will be used to check if all keywords are present in the title
@@ -24,7 +24,7 @@ public with sharing class JoobleCallout {
         System.debug('keywordList: ' + keywordList);
         System.debug('keywords: ' + keywords);
 
-        // The while loop handles multiple pages of results
+        // The while loop handles multiple pages of results which requires repeat callouts
         while (pageNumber <= maxPage) {
             System.debug('pageNumber: ' + pageNumber);
             System.debug('maxPage: ' + maxPage);
@@ -40,6 +40,7 @@ public with sharing class JoobleCallout {
                 calcMaxPage(jsonBody);
             }
             String cleanJson = jsonBody.replaceAll('\\\\r\\\\n', '').replaceAll('<b>', '').replaceAll('</b>', '').replaceAll('&nbsp', '');
+            System.debug('cleanJson: ' + cleanJson);
             Integer statusCode = res.getStatusCode();
             if (statusCode >= 200 && statusCode < 300 && !String.isBlank(cleanJson)) {
                 System.debug('statusCode: ' + statusCode);
@@ -59,11 +60,12 @@ public with sharing class JoobleCallout {
         return [SELECT Company_Name__c, Position_Title__c, Listing_Date__c FROM Application__c WHERE Id IN :newAppIds];
     }
 
-    public static void processJSON(String jsonBody, String keywords, String fromSearchDate) {
+    private static void processJSON(String jsonBody, String keywords, String fromSearchDate) {
         Integer matchCount = 0;
         Boolean containsAllKeywords = false;
         JoobleListingWrapper result = JoobleListingWrapper.parse(jsonBody);
         List<JoobleListingWrapper.Job> listings = result.jobs;
+        System.debug('listings size: ' + listings.size());
         for(JoobleListingWrapper.Job listing : listings) {
             for (String keyword : keywordList) {
                 if ((listing.title).contains(keyword)) {
@@ -93,7 +95,7 @@ public with sharing class JoobleCallout {
 
     // Check Jooble IDs on salesforceListings to see if they already exist in Applications
     // If so, ignore these listings (as duplicates).
-    public static void checkListingIds() {
+    private static void checkListingIds() {
         List<String> listingIdsToSearch = new List<String>();
         for (JoobleListingWrapper.job listing : salesforceListings) {
             listingIdsToSearch.add(listing.id);
@@ -110,7 +112,7 @@ public with sharing class JoobleCallout {
     }
 
     //Create Application objects for the listings that are not duplicates
-    public static void createApplications() {
+    private static void createApplications() {
         Map<String,Id> companyMap = checkCompanyNames(salesforceListings);
         for (JoobleListingWrapper.Job listing : salesforceListings) {
             if (!matchingIds.contains(listing.id) && companyMap.get(listing.company) != null){
@@ -120,7 +122,7 @@ public with sharing class JoobleCallout {
                 newApp.Company__c        = companyMap.get(listing.company);
                 newApp.Location__c       = listing.location;
                 newApp.Description__c    = listing.snippet;
-                newApp.Listing_URL__c    = listing.link;
+                newApp.Listing_URL__c    = 'https://jooble.org/desc/' + listing.id;
                 newApp.Listing_Date__c   = Date.valueOf(listing.updated);
 
                 newApplications.add(newApp);
@@ -128,7 +130,7 @@ public with sharing class JoobleCallout {
         }
     }
 
-    public static Map<String,Id> checkCompanyNames(List<JoobleListingWrapper.Job> salesforceListings) {
+    private static Map<String,Id> checkCompanyNames(List<JoobleListingWrapper.Job> salesforceListings) {
         Set<String> companyNames = new Set<String>();
         for (JoobleListingWrapper.Job listing : salesforceListings) {
             companyNames.add(listing.company);
@@ -159,7 +161,7 @@ public with sharing class JoobleCallout {
         return companyMap;
     }
 
-    public static void calcMaxPage(String jsonBody) {
+    private static void calcMaxPage(String jsonBody) {
         JoobleListingWrapper result = JoobleListingWrapper.parse(jsonBody);
         System.debug('result.totalCount: ' + result.totalCount);
         maxPage = (Integer) Math.ceil(result.totalCount * 1.0 / resultsPerPage);
@@ -168,7 +170,7 @@ public with sharing class JoobleCallout {
         System.debug('maxPageSet: ' + maxPageSet);
     }
 
-    public static void insertApplications() {
+    private static void insertApplications() {
         System.debug('Entered insertApplications');
         System.debug('newApplications.size(): ' + newApplications.size());
         if (!newApplications.isEmpty()) {
