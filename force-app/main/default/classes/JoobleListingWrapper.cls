@@ -19,7 +19,7 @@ public class JoobleListingWrapper{
 		public String updated;	//date/time field
 		public String id; // was Integer
 	}
-    // May not need
+
 	public static JoobleListingWrapper parse(String json){
 		return (JoobleListingWrapper) System.JSON.deserialize(json, JoobleListingWrapper.class);
 	}
