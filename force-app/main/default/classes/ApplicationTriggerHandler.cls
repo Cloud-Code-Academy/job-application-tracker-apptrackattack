@@ -26,7 +26,11 @@ public with sharing class ApplicationTriggerHandler {
             tasksToAdd.add(task3);
             } 
         }
-        insert tasksToAdd;
+        try {
+            insert tasksToAdd;
+        } catch (Exception e) {
+            System.debug('Error: ' + e.getMessage());
+        }
     }
 
     public static void afterUpdate(List<Application__c> updatedApplications, Map<Id, Application__c> oldApplications) {
@@ -190,8 +194,12 @@ public with sharing class ApplicationTriggerHandler {
                     ActivityDate = Date.today().addDays(2)
                 );
                 tasksToAdd.add(task2);
-        }
-        insert tasksToAdd;
+            }
+            try {
+                insert tasksToAdd;
+            } catch (Exception e) {
+                System.debug('Error: ' + e.getMessage());
+            }
         }
     }
 }

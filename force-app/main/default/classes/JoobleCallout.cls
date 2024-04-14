@@ -50,9 +50,12 @@ public with sharing class JoobleCallout {
             }
             pageNumber++;
         }
-        System.debug('Exited while loop');
-        System.debug('About to call insertApplications()');
-        insertApplications();
+
+        try {
+            insertApplications();
+        } catch (Exception e) {
+            System.debug('Error: ' + e.getMessage());
+        }
         return [SELECT Company_Name__c, Position_Title__c, Listing_Date__c FROM Application__c WHERE Id IN :newAppIds];
     }
 
@@ -144,7 +147,12 @@ public with sharing class JoobleCallout {
                 newAccounts.add(newAccount);
             }
         }
-        insert newAccounts;
+        try {
+            insert newAccounts;
+        } catch (Exception e) {
+            System.debug('Error: ' + e.getMessage());
+        }
+
         for (Account newAccount : newAccounts) {
             companyMap.put(newAccount.Name, newAccount.Id);
         }
@@ -164,7 +172,11 @@ public with sharing class JoobleCallout {
         System.debug('Entered insertApplications');
         System.debug('newApplications.size(): ' + newApplications.size());
         if (!newApplications.isEmpty()) {
-            insert newApplications;
+            try {
+                insert newApplications;
+            } catch (Exception e) {
+                System.debug('Error: ' + e.getMessage());
+            }
             for (Application__c newApp : newApplications) {
                 newAppIds.add(newApp.Id);
             }
