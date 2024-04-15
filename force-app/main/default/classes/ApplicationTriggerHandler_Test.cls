@@ -190,4 +190,35 @@ private class ApplicationTriggerHandler_Test {
         // Application inserted & updated should create 5 tasks (3 from the insert, 2 from the update)
         Assert.areEqual(5, tasksCreated.size());
     }
+
+    @isTest private static void testPreventDuplicateTasks() {
+        // Insert an Account to link to the Application
+        Account acc = new Account();
+        acc.Name = 'Test Account';
+        insert acc;
+
+        // Insert an Application
+        Application__c app = new Application__c();
+        app.Position_Title__c = 'Salesforce Developer';
+        app.Company__c = acc.Id;
+        app.Status__c = 'SAVED';
+        insert app;
+
+        // Udpate the status to 'APPLYING'
+        Application__c insertedApp = [SELECT Id, Status__c FROM Application__c WHERE Id = :app.Id];
+        insertedApp.Status__c = 'APPLYING';
+        update insertedApp;
+
+        // Update the status back to 'SAVED'
+        insertedApp = [SELECT Id, Status__c FROM Application__c WHERE Id = :app.Id];
+        Test.startTest();
+        insertedApp.Status__c = 'SAVED';
+        update insertedApp;
+        Test.stopTest();
+
+        // Assert that 8 tasks (3 when 'SAVED' + 5 when 'APPLYING') were created
+        // This tests whether duplicate tasks (with the same subject line) were created
+        List<Task> tasks = [SELECT Id, Subject FROM Task WHERE WhatId = :app.Id];
+        Assert.areEqual(8, tasks.size(), 'Eight tasks should have been created.');
+    }
 }
