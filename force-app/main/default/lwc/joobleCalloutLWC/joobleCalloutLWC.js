@@ -20,6 +20,8 @@ export default class JoobleCalloutLWC extends LightningElement {
   showResults = false;
   picklistPlaceholder = '-select-';
   selectedValue = '';
+  numberOfResults = 0;
+  resultMessage = null;
 
   get options() {
       return [
@@ -29,6 +31,10 @@ export default class JoobleCalloutLWC extends LightningElement {
           { label: 'Last 14 Days', value: '14' },
           { label: 'Last 21 Days', value: '21' }
       ];
+  }
+
+  get resultMessage() {
+      return this.resultMessage;
   }
 
   handleChange(event) {
@@ -44,6 +50,7 @@ export default class JoobleCalloutLWC extends LightningElement {
   }
 
   searchHandler(event) {
+    this.resultMessage = null;
     this.searchRunning = true;
     console.log('searchHandler');
     console.log(this.keywords, this.location, this.dateRangeDays, this.fromSearchDate);
@@ -51,13 +58,20 @@ export default class JoobleCalloutLWC extends LightningElement {
       .then(result => {
         console.log(result);
         this.searchResults = result;
-        // The following creates a link to the Applicatin record via the Position Title
+        this.numberOfResults = this.searchResults.length;
+
+        // The following creates a link to the Application record via the Position Title
         this.searchResults.forEach(element => {
           element.recordURL = `/${element.Id}`;
         });
-        if (this.searchResults.length > 0) {
+        if (this.numberOfResults > 0) {
+          this.resultMessage = this.numberOfResults === 1 ? `Found 1 Jooble listing:` : `Found ${this.numberOfResults} Jooble listings:`;
           this.showResults = true;
           this.showFooter = false;
+        } else {
+          this.resultMessage = 'No job listings found';
+          this.showResults = false;
+          this.showFooter = true;
         }
         this.searchRunning = false;
       })
@@ -77,6 +91,7 @@ export default class JoobleCalloutLWC extends LightningElement {
     this.searchResults = null;
     this.searchRunning = false;
     this.showResults = false;
+    this.resultMessage = null;
   }
 
   calcDate = function() {

@@ -49,13 +49,9 @@
         </lightning-combobox>
       </div>
     </div>
-    <template lwc:if={showFooter}>
-      <div slot="footer" class="slds-var-m-around_xxx-small">
-        <lightning-button 
-            variant="brand"
-            label="Search Jooble"
-            onclick={searchHandler}>
-        </lightning-button>
+    <template lwc:if={resultMessage}>
+      <div class="slds-var-p-horizontal_medium slds-var-p-top_medium">
+        <p><b>{resultMessage}</b></p>
       </div>
     </template>
     <template lwc:if={searchRunning}>
@@ -69,6 +65,15 @@
                 columns={columns}>
             </lightning-datatable>
         </div>
+    </template>
+    <template lwc:if={showFooter}>
+      <div slot="footer" class="slds-var-m-around_xxx-small">
+        <lightning-button 
+            variant="brand"
+            label="Search Jooble"
+            onclick={searchHandler}>
+        </lightning-button>
+      </div>
     </template>
   </lightning-card>
 </template>

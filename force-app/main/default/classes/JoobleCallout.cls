@@ -1,5 +1,5 @@
 public with sharing class JoobleCallout {
-    public static Integer resultsPerPage = 500;
+    public static Integer resultsPerPage = 100;
     public static List<String> keywordList = new List<String>();
     public static Set<Id> newAppIds = new Set<Id>();
     public static Integer pageNumber = 1;
@@ -27,7 +27,6 @@ public with sharing class JoobleCallout {
         // The while loop handles multiple pages of results which requires repeat callouts
         while (pageNumber <= maxPage) {
             System.debug('pageNumber: ' + pageNumber);
-            System.debug('maxPage: ' + maxPage);
             HttpRequest req = new HttpRequest();
             req.setEndpoint('callout:JoobleAPI');
             req.setMethod('POST');
@@ -57,7 +56,10 @@ public with sharing class JoobleCallout {
         } catch (Exception e) {
             System.debug('Error: ' + e.getMessage());
         }
-        return [SELECT Company_Name__c, Position_Title__c, Listing_Date__c FROM Application__c WHERE Id IN :newAppIds];
+        return [SELECT Company_Name__c, Position_Title__c, Listing_Date__c 
+                FROM Application__c 
+                WHERE Id IN :newAppIds
+                ORDER BY Listing_Date__c DESC];
     }
 
     private static void processJSON(String jsonBody, String keywords, String fromSearchDate) {
@@ -117,13 +119,15 @@ public with sharing class JoobleCallout {
         for (JoobleListingWrapper.Job listing : salesforceListings) {
             if (!matchingIds.contains(listing.id) && companyMap.get(listing.company) != null){
                 Application__c newApp = new Application__c();
-                newApp.Listing_ID__c     = listing.id;
-                newApp.Position_Title__c = listing.title.left(60);
-                newApp.Company__c        = companyMap.get(listing.company);
-                newApp.Location__c       = listing.location;
-                newApp.Description__c    = listing.snippet;
-                newApp.Listing_URL__c    = 'https://jooble.org/desc/' + listing.id;
-                newApp.Listing_Date__c   = Date.valueOf(listing.updated);
+                newApp.Listing_ID__c       = listing.id;
+                newApp.Position_Title__c   = listing.title.left(60);
+                newApp.Company__c          = companyMap.get(listing.company);
+                newApp.Location__c         = listing.location;
+                newApp.Description__c      = listing.snippet;
+                newApp.Listing_URL__c      = 'https://jooble.org/desc/' + listing.id;
+                newApp.Estimated_Salary__c = listing.salary != '' ? Decimal.valueOf(listing.salary) : null;
+                newApp.Listing_Source__c   = listing.source.left(40);
+                newApp.Listing_Date__c     = Date.valueOf(listing.updated);
 
                 newApplications.add(newApp);
             }

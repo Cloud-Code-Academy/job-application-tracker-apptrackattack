@@ -65,7 +65,7 @@ public with sharing class ApplicationTriggerHandler {
         Task task1 = new Task(
             Subject      = 'Check if the job description aligns with your interests and values',
             WhatId       = appId,
-            ActivityDate = Date.today().addDays(1)
+            ActivityDate = Date.today()
         );
         if (!existingTaskSubjects.contains(task1.Subject)) {
             tasksToAdd.add(task1);
@@ -74,7 +74,7 @@ public with sharing class ApplicationTriggerHandler {
         Task task2 = new Task(
             Subject      = 'Review the highlighted skills to see if the role is a good fit',
             WhatId       = appId,
-            ActivityDate = Date.today().addDays(1)
+            ActivityDate = Date.today()
         );
         if (!existingTaskSubjects.contains(task2.Subject)) {
             tasksToAdd.add(task2);
