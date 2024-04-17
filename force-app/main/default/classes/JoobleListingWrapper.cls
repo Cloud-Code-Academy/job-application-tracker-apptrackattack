@@ -11,13 +11,13 @@ public class JoobleListingWrapper{
 		public String title;
 		public String location;
 		public String snippet;
-		public String salary; //convert to integer?
+		public String salary; 
 		public String source;
 		public String type;
 		public String link; //URL
 		public String company; //Convert to Account
 		public String updated;	//date/time field
-		public String id; // was Integer
+		public String id; 
 	}
 
 	public static JoobleListingWrapper parse(String json){
