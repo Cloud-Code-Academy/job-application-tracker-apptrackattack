@@ -2,41 +2,54 @@ public with sharing class EventUtilityClass {
     
     // Send reminder email about upcoming interview
     public static void sendReminderEmail(){
-        List<Event> eventList = [SELECT Id, OwnerId, WhatId, Owner.FirstName, Owner.Email, Subject, StartDateTime FROM Event WHERE StartDateTime = TOMORROW];
+        List<Event> interviews = [SELECT Id, OwnerId, WhatId, Subject, StartDateTime, Location FROM Event WHERE StartDateTime = TOMORROW];
 
-        List<Id> appIDs = new List<Id>();
-        for (Event evnt : eventList) {
-        appIDs.add(evnt.WhatId);
+        Set<Id> appIDs = new Set<Id>();
+        Set<Id> userIds = new Set<Id>();
+        for (Event interview : interviews) {
+        appIDs.add(interview.WhatId);
+        userIds.add(interview.OwnerId);
         }
-        // Get applications to display app name and retrieve the AccountId (Company__c)
-        List<Application__c> appList = [SELECT Id, Name, Company__c FROM Application__c WHERE Id IN :appIDs];
+        // Application Map to locate the associated application object and its fields
+        Map<Id,Application__c> appMap = new Map<Id,Application__c>([SELECT Id, Name, Company__c, OwnerId FROM Application__c WHERE Id IN :appIDs]);
+
+        // User Map to locate the associated user object and its fields
+        Map<Id,User> userMap = new Map<Id,User>([SELECT Id, FirstName, Email FROM User WHERE Id IN :userIds]);
+
         // Get the accounts to display the company name in email
-        List<Id> accIDs = new List<Id>();   
-        for (Application__c app : appList) {
+        Set<Id> accIDs = new Set<Id>();
+        Map<Id,Id> appIdAcctIdMap = new Map<Id,Id>(); 
+        for (Application__c app : appMap.values()) {
         accIDs.add(app.Company__c);
+        appIdAcctIdMap.put(app.Id, app.Company__c);
         }
         // Account Map to locate the associated account object and its fields
         Map<Id,Account> acctMap = new Map<Id,Account>([SELECT Id, Name FROM Account WHERE Id IN :accIDs]);
 
-        String intervieweeName = eventList[0].Owner.FirstName;
-        String eventSubject = eventList[0].Subject;
-        String eventTime = eventList[0].StartDateTime.format();
-        String dayOfWeek = eventList[0].StartDateTime.format('EEEE');
-        String appName = appList[0].Name;
-        String companyName =  acctMap.get(appList[0].Company__c).Name;
-
-        if (!eventList.isEmpty()){
-            List<Messaging.SingleEmailMessage> emails = new List<Messaging.SingleEmailMessage>();
-            for(Event event : eventList){
+        List<Messaging.SingleEmailMessage> reminderEmails = new List<Messaging.SingleEmailMessage>();
+        
+        for (Event interview : interviews) {
             Messaging.SingleEmailMessage email = new Messaging.SingleEmailMessage();
+
+            String intervieweeName = userMap.get(interview.ownerId).FirstName;
+            String eventSubject = interview.Subject;
+            String eventTime = interview.StartDateTime.format();
+            String eventLocation = interview.Location;
+            String dayOfWeek = interview.StartDateTime.format('EEEE');
+            String appName = appMap.get(interview.WhatId).Name;
+            String companyName =  acctMap.get(appIdAcctIdMap.get(interview.WhatId)).Name;
+
             email.setSaveAsActivity(false); // because sending to User not Contact
-            email.setToAddresses(new List<String>{event.Owner.Email});
+            email.setToAddresses(new List<String>{userMap.get(interview.OwnerId).Email});
             email.setSubject('Interview Reminder — ' + companyName);
-            email.setPlainTextBody('Hey ' + intervieweeName + ',\n\n' + 'Don\'t forget you have an interview with ' + companyName + ' on ' + dayOfWeek + '. This is associated with application ' + appName + '. Make sure you\'re ready! \n\n' + 'Details: ' + eventSubject + '\n' + 'Date/Time: ' + eventTime + '\n\n' + 'Good luck!');
-            email.setTargetObjectId(event.OwnerId);
-            emails.add(email);
-            }
-            Messaging.sendEmail(emails);
+            email.setPlainTextBody('Hey ' + intervieweeName + ',\n\n' + 'Don\'t forget you have an interview with ' + companyName + ' on ' + dayOfWeek + '. This is associated with application ' + appName + '. Make sure you\'re ready! \n\n' + 'Details: ' + eventSubject + '\n' + 'Date & Time: ' + eventTime + '\n' + 'Location: ' + eventLocation +'\n\n' + 'Good luck!' + '\n');
+            email.setTargetObjectId(interview.OwnerId);
+
+            reminderEmails.add(email);
+        }
+
+        if (reminderEmails.size() > 0) {
+            Messaging.sendEmail(reminderEmails);
         }
     }
 }
