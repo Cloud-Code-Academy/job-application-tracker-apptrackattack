@@ -27,12 +27,44 @@ public with sharing class FlowHandler_Test {
         insert testEvent;
     }
 
-    @isTest static void checkForEventOverlapPostive() {
+    @isTest static void checkForEventOverlapPostiveEnd() {
         // Create a new test event that overlaps with the existing event
         Event testEvent = new Event(
             Subject = 'Test Interview',
             StartDateTime = DateTime.newInstance(Date.today().year(), Date.today().month(), Date.today().day()+1, 14, 30, 00),
             EndDateTime = DateTime.newInstance(Date.today().year(), Date.today().month(), Date.today().day()+1, 15, 30, 00)
+        );
+
+        Test.startTest();
+        List<Boolean> overlapFound = FlowHandler.checkForInterviewOverlap(new List<List<DateTime>>{new List<DateTime>{testEvent.StartDateTime, testEvent.EndDateTime}});
+        Test.stopTest();
+
+        // Assert that overlap is found
+        System.assertEquals(true, overlapFound[0]);
+    }
+
+    @isTest static void checkForEventOverlapPostiveBeginning() {
+        // Create a new test event that overlaps with the existing event
+        Event testEvent = new Event(
+            Subject = 'Test Interview',
+            StartDateTime = DateTime.newInstance(Date.today().year(), Date.today().month(), Date.today().day()+1, 13, 30, 00),
+            EndDateTime = DateTime.newInstance(Date.today().year(), Date.today().month(), Date.today().day()+1, 14, 30, 00)
+        );
+
+        Test.startTest();
+        List<Boolean> overlapFound = FlowHandler.checkForInterviewOverlap(new List<List<DateTime>>{new List<DateTime>{testEvent.StartDateTime, testEvent.EndDateTime}});
+        Test.stopTest();
+
+        // Assert that overlap is found
+        System.assertEquals(true, overlapFound[0]);
+    }
+
+    @isTest static void checkForEventOverlapPositiveBeginningEnd() {
+        // Create a new test event that overlaps with the existing event
+        Event testEvent = new Event(
+            Subject = 'Test Interview',
+            StartDateTime = DateTime.newInstance(Date.today().year(), Date.today().month(), Date.today().day()+1, 13, 00, 00),
+            EndDateTime = DateTime.newInstance(Date.today().year(), Date.today().month(), Date.today().day()+1, 16, 00, 00)
         );
 
         Test.startTest();
